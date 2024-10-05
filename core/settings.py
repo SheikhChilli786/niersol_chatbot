@@ -179,6 +179,6 @@ CHANNEL_LAYERS = {
 # }
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-LOGIN_URL = '/dashboard/login'
-LOGOUT_REDIRECT_URL = "/dashboard/login" 
+LOGIN_URL = '/dashboard/login/'
+LOGOUT_REDIRECT_URL = "/dashboard/login/" 
 SESSION_COOKIE_AGE = 21600
