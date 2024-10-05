@@ -15,9 +15,26 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import *
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
 
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')  # Replace 'home' with your home view name
+        else:
+            messages.error(request, 'Invalid username or password.')
+    return render(request, 'login.html')
+
+@login_required
 def api_key_view(request):
     try:
         api_key = APIKey.objects.first()
@@ -58,7 +75,6 @@ def api_key_view(request):
         'api_key': api_key.api_key if api_key else None
     })
 
-
 def format_record(record):
     """Format a single record to match the desired JSON Lines format."""
     
@@ -71,7 +87,7 @@ def format_record(record):
     
     return {"messages": messages}
 
-
+@login_required
 def select_model(request,job_id):
     action = request.POST.get('action','')
     output_model = request.POST.get('output_model','')
@@ -85,7 +101,7 @@ def select_model(request,job_id):
         'status':'success'
     })
 
-
+@login_required
 def fine_tune(request):
     if request.method == 'POST':
         api_key = APIKey.objects.first().api_key
@@ -124,7 +140,7 @@ def fine_tune(request):
             os.remove(temp_file_name)
 
 
-class FineTunningListView(View):
+class FineTunningListView(LoginRequiredMixin,View):
     def get(self,request):
         api_key = APIKey.objects.first().api_key
         openai.api_key = api_key
@@ -152,7 +168,7 @@ class FineTunningListView(View):
         return render(request,'fine_tunning/index.html', {'jobs': jobs})
     
 
-class FineTunnigDetailView(View):
+class FineTunnigDetailView(LoginRequiredMixin,View):
     def get(self,request, job_id):
         api_key = APIKey.objects.first().api_key
         openai.api_key = api_key
@@ -168,7 +184,7 @@ class FineTunnigDetailView(View):
             'job':job_dict
         })
 
-class FineTuneExampleListView(View):
+class FineTuneExampleListView(LoginRequiredMixin,View):
     LIST_OF_BASE_MODELS = [
         'babbage-002',
         'davinci-002',
