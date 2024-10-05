@@ -1,0 +1,362 @@
+<style>
+  .dark-theme {
+    background-color: #343a40;
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  .dark-theme .form-control {
+    background-color: #343a40;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+  }
+
+  .dark-theme label {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+
+  .control-label {
+    margin-top: 5px;
+  }
+
+  .cancel-example-btn,
+  .create-model-btn,
+  .add-example-btn {
+    background-color: #444;
+    /* Button color */
+    color: white;
+    border: none;
+    padding: 5px 8px;
+    margin-left: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+    /* Rounded corners */
+  }
+
+  .create-model-btn {
+    background-color: #00af9c;
+
+  }
+
+  .sub-header-training {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+  }
+
+  .sub-header-training p {
+    font-size: 12px;
+  }
+
+.saved-prompt p{
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 1;
+  line-clamp: 1; 
+  white-space: normal;
+  
+}
+.saved-prompt.expanded p{
+cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  /* Removed line-clamping properties */
+  white-space: normal; /* Allow text to wrap onto multiple lines */
+  overflow: visible; /* Allow content to expand */
+  text-overflow:unset; /* No ellipsis */
+  word-wrap: break-word; /* Break long words onto new lines */
+}
+
+  .prompt-details {
+    display: none;
+    margin-left: 0px;
+    padding: 5px;
+    margin-bottom: 15px;
+  }
+
+  .prompt-details p {
+    margin-bottom: 5px;
+    cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  /* Removed line-clamping properties */
+  white-space: normal; /* Allow text to wrap onto multiple lines */
+  overflow: visible; /* Allow content to expand */
+  text-overflow:unset; /* No ellipsis */
+  word-wrap: break-word; /* Break long words onto new lines */
+
+  }
+
+
+  .saved-prompt.highlighted {
+    background-color: rgba(255, 255, 255, 0.1);
+    /* White with transparency */
+    transition: background-color 0.3s ease;
+    /* Smooth transition for background change */
+  }
+   .saved-prompt-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .saved-prompt-actions i {
+    cursor: pointer;
+    color: #00af9c;
+  }
+
+  .saved-prompt-actions i:hover {
+    color: #00796b;
+  }
+</style>
+<div class="form-group row dark-theme" style="margin-bottom: 0px;">
+
+  <div class="col-md-6">
+    <label for="name" class="control-label">Model Name:</label>
+    <input type="text" name="name" value="" class="form-control" id="name" required>
+  </div>
+
+  <div class="col-md-6">
+    <label for="model" class="control-label">Base Model:</label>
+    <input type="text" id="model" value="" name="model" list="modelList" class="form-control" required>
+    <datalist id="modelList">
+      {% for base_model in base_models %}
+      <option value="{{base_model}}"></option>
+      {% endfor %}
+    </datalist>
+  </div>
+</div>
+<div class="alert-container">
+  <!-- This will hold the Bootstrap alert dynamically -->
+</div>
+<div class="container mt-4 dark-theme" style="margin-top: 0px;">
+  <div class="sub-header-training">
+    <h6>Traning data</h6>
+    <button class="create-model-btn">+ Create</button>
+  </div>
+  <p class="text-muted" style="margin-bottom: 5px;">Please fill out the prompts below.</p>
+  <div class="sub-header-training">
+    <p><i class="fas fa-info-circle"></i>There should be atleast 10 examples.</p>
+    <div>
+      <button class="cancel-example-btn" style="display: none;">Cancel</button>
+      <button class="add-example-btn">Add</button>
+    </div>
+  </div>
+  <div class="prompt mb-3" data-url="" style="display: none;">
+    <div class="form-group">
+      <label for="role-textarea">System:</label>
+      <i class="bi bi-question-circle" data-bs-toggle="tooltip" data-bs-placement="right"
+        title="Enter the role or context of the GPT here.(optional)"></i>
+      <textarea id="role-textarea" class="form-control" rows="2" style='margin-top:10px;'
+        placeholder="Role of the GPT...(optional)(recommended)"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="email-received-textarea">User:</label>
+      <i class="bi bi-question-circle" data-bs-toggle="tooltip" data-bs-placement="right"
+        title="Provide an example of the message may be recieved here."></i>
+      <textarea id="email-received-textarea" class="form-control" rows="3" style='margin-top:10px;'
+        placeholder="Example message recieved..." required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="ideal-response-textarea">Assistant:</label>
+      <i class="bi bi-question-circle" data-bs-toggle="tooltip" data-bs-placement="right"
+        title="Enter the ideal response for the message recieved."></i>
+      <textarea id="ideal-response-textarea" class="form-control" rows="3" style='margin-top:10px;' placeholder="Ideal message Response..." required></textarea>
+    </div>
+  </div>
+  <div class="saved-prompts">
+    <!-- Dynamic content based on saved prompts -->
+    {% for saved_prompt in saved_prompts %}
+    <div class="saved-prompt" data-id="{{ saved_prompt.id }}">
+      <p><strong style="color:#00af9c;">User:</strong>{{ saved_prompt.user }}</p><hr style="border: 1px solid white;">
+      <div class="saved-prompt-actions">
+        <i class="fas fa-edit" data-id="{{ saved_prompt.id }}" title="Edit"></i>
+        <i class="fas fa-trash" data-id="{{ saved_prompt.id }}" title="Delete"></i>
+      </div>
+    </div>
+    <div class="prompt-details" id="prompt-details-{{ saved_prompt.id }}">
+      {% if saved_prompt.system %}
+      <p><strong style="color:#00af9c;">System:</strong>{{ saved_prompt.system }}</p> <hr style="border: 1px solid white;">
+      {% endif %}
+      <p><strong style="color:#00af9c;">Assistant:</strong>{{ saved_prompt.assistant }}</p> <hr style="border: 1px solid white;">
+    </div>
+    {% endfor %}
+  </div>
+  <div>
+    <!-- add a container such that it lists the saved prompts, initially it should only show user prompt data in a single row but when that data is clicked it should show system and assistant prompt each on a seperat row -->
+  </div>
+</div>
+<script>
+  $(document).ready(function () {
+    var togglePrompts = false;
+    var create_model_btn_counter = 0;
+    $('.add-example-btn').click(function () {
+      console.log(togglePrompts)
+      if (!togglePrompts) {
+        $('.prompt').show('slow').slideDown();
+        $(this).text('Save');
+        $('.cancel-example-btn').show();
+        $(this).css('background-color', '#00af9c');
+        togglePrompts = !togglePrompts;
+      } else {
+        var system = $('#role-textarea').val().trim();
+        var user = $('#email-received-textarea').val().trim();
+        var assistant = $('#ideal-response-textarea').val().trim();
+        if(user==""){
+          $('#email-received-textarea').focus();
+          return;
+        }
+        if(assistant==""){
+          $('#ideal-response-textarea').focus();
+          return;
+        }
+        $.ajax({
+          url:'{% url "create-modal" %}',
+          method:'POST',
+          data:{
+            'system':system,
+            'user':user,
+            'assistant':assistant,
+            'csrfmiddlewaretoken': '{{ csrf_token }}' // Include CSRF token
+          },
+          success: function (response) {
+            var newPromptId = response.example.id; // Unique ID for each prompt
+            var newPrompt = $('<div class="saved-prompt" data-id="' + newPromptId + '"></div>').append(
+              '<p><strong style="color:#00af9c;">User</strong>:' + response.example.user + '</p>' +
+              '<hr style="border: 1px solid white;">' +
+              '<div class="saved-prompt-actions">' +
+              '<i class="fas fa-edit" data-id="' + newPromptId + '" title="Edit"></i>' +
+              '<i class="fas fa-trash" data-id="' + newPromptId + '" title="Delete"></i>' +
+              '</div>'
+            );
+            var newPromptDetails = $('<div class="prompt-details" id="prompt-details-' + newPromptId + '" style="display: none;"></div>');
+
+            // Conditionally append System prompt if it exists
+            if (response.example.system) {
+              newPromptDetails.append(
+                '<p><strong style="color:#00af9c;">System</strong>:' + response.example.system + '</p>' + '<hr style="border: 1px solid white;">'
+              );
+            }
+
+            // Append Assistant prompt
+            newPromptDetails.append(
+              '<p><strong style="color:#00af9c;">Assistant</strong>:' + response.example.assistant + '</p>' + '<hr style="border: 1px solid white;">'
+            );
+
+            $('.saved-prompts').append(newPrompt).append(newPromptDetails);
+            clearPrompts();
+          }
+        })
+        
+
+        // Append new elements to the saved prompts container
+
+
+        // Hide prompt form and reset button states
+        // $('.cancel-example-btn').hide();
+        // $(this).text('Add');
+        // $(this).css('background-color', '#444');
+        // $('.prompt').hide('slow').slideUp();
+      }
+
+    });
+
+    $('.cancel-example-btn').click(function () {
+      clearPrompts();
+      $('.add-example-btn').text('Add');
+      $('.cancel-example-btn').hide();
+      $('.add-example-btn').css('background-color', '#444');
+      togglePrompts = !togglePrompts;
+      $('.prompt').hide('slow').slideUp();
+    });
+
+    // Use event delegation to handle dynamically added .saved-prompt elements
+    $(document).off('click', '.saved-prompt').on('click', '.saved-prompt', function () {
+      var promptId = $(this).data('id');
+      if ($(this).hasClass('expanded')) {
+        $(this).removeClass('expanded')
+        $('#prompt-details-' + promptId).slideUp('slow');
+        $(this).removeClass('highlighted'); // Remove the highlight when collapsed
+      } else {
+        $(this).addClass('expanded');
+        $('#prompt-details-' + promptId).slideDown();
+        $(this).addClass('highlighted'); // Add the highlight when expanded
+
+      }
+    });
+    $('.create-model-btn').click(function(){
+      console.log('clicked')
+    })
+    $('.create-model-btn').click(function () {
+      var name = $('#name')
+      var model = $('#model')
+      if(name.val()==""){
+        name.focus();
+        return;
+      }
+      if(model.val()==""){
+        model.focus();
+        return;
+      }
+      var savedPromptCount = $('.saved-prompt').length; // Count the number of saved prompts
+      if (savedPromptCount < 10) {
+        showBootstrapAlert('You must have at least 10 saved prompts to create a model.', 'danger');
+        return;
+      }
+      create_model_btn_counter++;
+      console.log(create_model_btn_counter)
+      if(create_model_btn_counter==1){
+          showBootstrapAlert('Before Creating model please make sure all examples are right as they cannot be edited later, and click create again.', 'warning');
+          return;
+      }
+      if(create_model_btn_counter==2){
+        $.ajax({
+          url:'{% url "create-job" %}',
+          method:'POST',
+          data:{
+            'model_name':name.val(),
+            'base_model':model.val(),
+            'csrfmiddlewaretoken': '{{ csrf_token }}' // Include CSRF token
+          },
+          success:function(response){
+            console.log(response)
+            window.location.reload()
+          }
+        })
+        create_model_btn_counter = 0;
+      }
+    });
+  });
+
+  function clearPrompts() {
+    $('#ideal-response-textarea').val('');
+    $('#email-received-textarea').val('');
+    $('#role-textarea').val('');
+  }
+  function showBootstrapAlert(message, type) {
+      // Remove any existing alert
+
+      $('.alert-container').empty();
+
+      // Create a new Bootstrap alert
+      var alertHtml = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">'
+        + message
+        + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+        + '</div>';
+
+      // Append the alert to the container
+      $('.alert-container').append(alertHtml);
+    }
+</script>

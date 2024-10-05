@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+
+{% block title %}Fine-Tunning{% endblock %}
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #1b1f24;
+        color: white;
+    }
+
+    .models-button {
+        display: inline-flex;
+        padding: 5px 7px;
+        color: white;
+        border-radius: 5px;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        background-color: #50575e;
+    }
+
+    .models-button:before {
+        margin-right: 10px;
+        font-size: 14px;
+    }
+
+    .fine-tuning-header {
+        background-color: #343a40;
+        /* Background color */
+        padding: 15px;
+        color: white;
+        border-top-left-radius: 7px;
+        border-top-right-radius: 7px;
+        border-bottom: 1px solid black;
+    }
+
+    .fine-tuning-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+        /* Space between title and buttons */
+    }
+
+    .fine-tuning-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+    }
+
+
+    .fine-tuning-actions {
+        display: flex;
+    }
+
+    .learn-more-button,
+    .create-button {
+        background-color: #50575e;
+        /* Button color */
+        color: white;
+        border: none;
+        padding: 5px 8px;
+        margin-left: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 14px;
+        /* Rounded corners */
+    }
+
+    .create-button {
+        background-color: #00af9c;
+        /* Create button color */
+    }
+
+    .fine-tuning-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .fine-tuning-list,
+    .fine-tuning-detail {
+        width: 50%;
+        /* Each block takes half the width */
+    }
+
+    /* Responsive styles */
+    @media (max-width: 1024px) {
+        .fine-tuning-container {
+            flex-direction: column;
+            /* Stack the blocks vertically */
+        }
+
+        .fine-tuning-list,
+        .fine-tuning-detail {
+            width: 100%;
+            /* Full width on smaller screens */
+            display: none;
+
+            /* Initially hide both blocks */
+        }
+
+        .fine-tuning-list.active,
+        .fine-tuning-detail.active {
+            display: block;
+            overflow-y: auto;
+            /* Enables vertical scrolling if content overflows */
+            overflow-x: auto;
+            /* Prevents horizontal scrolling */
+            /* Show the active block */
+        }
+    }
+
+    @media (max-width: 500px) {
+        .learn-more-button {
+            display: none;
+        }
+
+    }
+</style>
+<div class="fine-tuning-header">
+    <div class="fine-tuning-title">Fine-tuning</div>
+    <div class="fine-tuning-controls">
+        <button class="models-button">Models</button>
+        <div class="fine-tuning-actions">
+        <button class="learn-more-button" onclick="window.open('https://platform.openai.com/docs/guides/fine-tuning', '_blank')">Learn more</button>
+            <button class="create-button">+ Create</button>
+        </div>
+    </div>
+</div>
+<div class="fine-tuning-container">
+    {% block models-list %}
+    <style>
+        .fine-tuning-list {
+            background-color: #343a40;
+            /* Dark background */
+            padding: 20px;
+            color: white;
+            border-top-left-radius: 0px;
+            border-top-right-radius: 0px;
+            max-width: 100%;
+            /* Adjust as needed */
+            margin: 0 auto;
+            border-right: 1px solid black;
+            /* Center the component */
+        }
+
+        .fine-tuning-item {
+            display: flex;
+            cursor: pointer;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #444;
+            /* Divider between items */
+        }
+
+
+        .item-title {
+            font-size: 13px;
+            flex: 1;
+            /* Take up available space */
+            color: #f0f0f0;
+            /* Slightly lighter color for better readability */
+        }
+
+        .item-datetime {
+            font-size: 13px;
+            color: #888;
+            /* Dimmer color for date and time */
+        }
+
+        .item-status {
+            background-color: #e74c3c;
+            /* Background color for "Failed" */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .item-status.failed {
+            background-color: #e74c3c;
+            /* Red background for failed status */
+        }
+
+        .item-status.failed:before {
+            content: '⚠';
+            /* Icon for failed status */
+            margin-right: 5px;
+        }
+
+        .selected-indicator {
+            color: #00af9c;
+            /* Green color for selected indicator */
+            font-weight: bold;
+            margin-left: 10px;
+            /* Space between job ID and indicator */
+        }
+    </style>
+    <div class="fine-tuning-list active">
+        {% for job in jobs %}
+        <div class="fine-tuning-item " data-job-id="{{ job.id }}">
+            <div class="item-title">
+                {% if job.model_name %}
+                    {{ job.model_name }}
+                {% else %}
+                    {{ job.id }}
+                {% endif %}
+                {% if job.selected %}
+                <span class="selected-indicator" >Selected</span>
+                {% else %}
+                <span class="selected-indicator" style="display:none;" >Selected</span>
+                {% endif %}
+            </div>
+            <div class="item-datetime">{{ job.created_at }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endblock %}
+    {% block model-detail %}
+    <style>
+        h3 {
+            color: #fefefe;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .model-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .select-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            background-color: #00af9c;
+            /* Green background by default */
+        }
+
+        .select-button.selected {
+            background-color: #e74c3c;
+            /* Red background if selected */
+        }
+
+        .select-button:hover {
+            opacity: 0.8;
+        }
+
+        .model-header h4 {
+            margin: 0;
+        }
+
+        .status-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: #9EA7B1;
+        }
+
+        .status {
+            background-color: #00af9c;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .fine-tuning-detail {
+            background-color: #343a40;
+            padding: 20px;
+            border-top-left-radius: 0px;
+            border-top-right-radius: 0px;
+            width: 100%;
+        }
+
+        .fas {
+            font-size: 13px;
+            /* Adjusts icon size */
+            color: #f8f7f7;
+            /* Optional: Adds color to the icons */
+            margin-right: 8px;
+            /* Adds some space between icon and text */
+            flex-shrink: 0;
+            /* Prevents icon from shrinking */
+
+        }
+
+        .status-section {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-weight: bold;
+        }
+
+        .details,
+        .training-info ul {
+            list-style-type: none;
+            /* Removes default bullet points */
+            padding: 0;
+            /* Removes default padding */
+            margin: 0;
+            /* Removes default margin */
+        }
+
+        .details li,
+        .training-info ul li {
+            display: flex;
+            /* Enables flexbox layout for list items */
+            align-items: center;
+            /* Aligns items vertically centered */
+            padding: 8px 0;
+            /* Adds vertical spacing between list items */
+        }
+
+        .icon {
+            margin-right: 8px;
+            /* Adds some space between icon and text */
+            flex-shrink: 0;
+            /* Prevents icon from shrinking */
+        }
+
+        .list-heading {
+            font-weight: bold;
+            /* Makes heading bold */
+            flex-shrink: 0;
+            /* Prevents heading from shrinking */
+            width: 150px;
+            /* Fixed width for alignment */
+        }
+
+        .list-value {
+            flex-grow: 1;
+            /* Makes value take remaining space */
+            text-align: left;
+            /* Aligns value to the left */
+            margin-left: 10px;
+            /* Adds some space between heading and value */
+        }
+
+        .loader {
+            display: none;
+            /* Hidden by default */
+            font-size: 16px;
+            text-align: center;
+            margin-top: 20px;
+            color: #00af9c;
+            /* Loader color */
+        }
+    </style>
+
+    <div class="fine-tuning-detail">
+        <div class="loader" style="display: none;">Loading...</div>
+        <div class="fine-tuning-detail-content">
+            <h3 id="model-title">MODEL</h3>
+            <div class="model-header">
+                <h5 id="model-name"></h5>
+                <button id="select-button" class="select-button" data-job-id="">
+                    Select
+                </button>
+            </div>
+            <div id="status-section" class="status-section">
+                <span class="status-label">Status</span>
+                <span id="status" class="status"></span>
+            </div>
+            <ul class="details">
+                <li>
+                    <i class="fas fa-info-circle"></i>
+                    <span class="list-heading">Job ID:</span>
+                    <span id="job-id" class="list-value"></span>
+                </li>
+                <li>
+                    <i class="fas fa-box"></i>
+                    <span class="list-heading">Base model:</span>
+                    <span id="base-model" class="list-value"></span>
+                </li>
+                <li id="output-model-item" style="display: none;">
+                    <i class="fas fa-tag"></i>
+                    <span class="list-heading">Output model:</span>
+                    <span id="output-model" class="list-value"></span>
+                </li>
+                <li>
+                    <i class="fas fa-clock"></i>
+                    <span class="list-heading">Created at:</span>
+                    <span id="created-at" class="list-value"></span>
+                </li>
+                <li id="estimated-finish-item" style="display: none;">
+                    <i class="fas fa-clock"></i>
+                    <span class="list-heading">Estimated Finish:</span>
+                    <span id="estimated-finish" class="list-value"></span>
+                </li>
+            </ul>
+            <div class="training-info">
+                <ul>
+                    <li>
+                        <i class="fas fa-hashtag"></i>
+                        <span class="list-heading">Trained tokens:</span>
+                        <span id="trained-tokens" class="list-value"></span>
+                    </li>
+                    <li>
+                        <i class="fas fa-dice"></i>
+                        <span class="list-heading">Seed:</span>
+                        <span id="seed" class="list-value"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function updateFineTuningList(selectedJobId) {
+        $('.fine-tuning-list .fine-tuning-item').each(function () {
+            var item = $(this);
+            var itemId = item.data('job-id');
+            
+            if (itemId == selectedJobId) {
+                item.find('.selected-indicator').show();
+            } else {
+                item.find('.selected-indicator').hide();
+            }
+        });
+    }
+    function UnSelectAllModels() {
+        $('.fine-tuning-list .fine-tuning-item').each(function () {
+                var item = $(this);
+                item.find('.selected-indicator').hide();
+        });
+    }
+    function populateDetailView(data) {
+        // Update the model name
+        $('#model-name').text(data.fine_tuned_model || data.model);
+
+        // Update the select button text and data attribute
+        var selectButton = $('#select-button');
+
+        selectButton.text(data.selected ? 'Unselect' : 'Select');
+        selectButton.data('job-id', data.id);
+        if (data.selected) {
+            selectButton.css('background-color', 'red');
+            selectButton.addClass('selected');
+        } else {
+            selectButton.css('background-color', '#00af9c');
+            selectButton.removeClass('selected'); // Make sure to remove class when not selected
+        }
+        var statusColor;
+        if(data.status !== 'succeeded'){
+            selectButton.hide()
+        }else{
+            selectButton.show()
+
+        }
+        var statusElement = $('#status');
+        if (data.status == 'running'){
+            data.status = 'Training';
+            var statusColor ='#877f31';
+        }else if(data.status == 'failed'){
+            var statusColor ='#e20809';
+        }else{
+            var statusColor ='#00af9c';
+        }
+        
+        statusElement.text(data.status).css('background-color', statusColor);
+
+        // Populate job details
+        $('#job-id').text(data.id);
+        $('#base-model').text(data.model);
+
+        if (data.fine_tuned_model) {
+            $('#output-model').text(data.fine_tuned_model);
+            $('#output-model-item').show();
+        } else {
+            $('#output-model-item').hide();
+        }
+
+        $('#created-at').text(data.created_at);
+
+        if (data.estimated_finish) {
+            $('#estimated-finish').text(data.estimated_finish);
+            $('#estimated-finish-item').show();
+        } else {
+            $('#estimated-finish-item').hide();
+        }
+
+        $('#trained-tokens').text(data.trained_tokens);
+        $('#seed').text(data.seed);
+
+        // Hide loader after updating the content
+        $('.fine-tuning-detail .loader').hide();
+    }
+
+    $(document).ready(function () {
+        $('.create-button').click(function(){
+            $.ajax({
+                url:"{% url 'create-modal' %}",
+                method:'GET',
+                success:function(response){
+                    
+                    $('#myModal .modal-body').html(response)
+                    $("#myModal").modal('show')
+                }
+            })
+        })
+        $('.fine-tuning-detail-content').hide()
+        $('.select-button').click(function () {
+            var button = $(this);
+            var output_model = $('#output-model').text().trim()
+            var jobId = button.data('job-id');
+            var isSelected = button.hasClass('selected');
+            var action = isSelected ? 'unselect' : 'select';
+            $.ajax({
+                url: '/dashboard/select/' + jobId + '/', // Update with your API endpoint
+                method: 'POST',
+                data: {
+                    'output_model':output_model,
+                    "action": action,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}' // Include CSRF token
+                },
+
+                success: function (response) {
+                    if (action === 'select') {
+                        updateFineTuningList(jobId);
+                        button.text('Unselect').addClass('selected');
+                        button.css('background-color', 'red')
+                    } else {
+                        UnSelectAllModels();
+                        button.text('Select').removeClass('selected');
+                        button.css('background-color', '#00af9c')
+                    }
+                }
+            });
+        });
+
+        // Trigger the selected item click when the page loads
+        // Hide details by default on mobile view
+        var isMobile = $(window).width() <= 768;
+        if (isMobile) {
+            $('.fine-tuning-list').addClass('active');
+        }
+
+        // Toggle visibility between list and detail on mobile/tablet view
+        $(document).on('click', '.fine-tuning-item', function () {
+            $('.fine-tuning-detail-content').hide()
+            $('.fine-tuning-detail .loader').show();
+            var jobId = $(this).data('job-id'); // Use data-job-id attribute
+            $.ajax({
+                url: '/dashboard/fine-tunning/' + jobId + '/',
+                method: 'GET',
+                success: function (response) {
+                    $('.fine-tuning-detail-content').show()
+                    populateDetailView(response.job);
+                    if (isMobile) {
+                        $('.fine-tuning-buttons').hide();
+                        $('.fine-tuning-list').removeClass('active');
+                        $('.fine-tuning-detail').addClass('active');
+                    } else {
+                        $('.fine-tuning-detail .loader').hide();
+
+                    }
+                }
+            });
+        });
+
+        $('.models-button').click(function () {
+            if (isMobile) {
+                $('.fine-tuning-detail').removeClass('active');
+                $('.fine-tuning-list').addClass('active');
+            }
+        });
+
+        // Adjust visibility on window resize
+    });
+</script>
+{% endblock %}
